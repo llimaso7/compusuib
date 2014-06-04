@@ -1,0 +1,212 @@
+*-----------------------------------------------------------
+* Title      :
+* Written by :
+* Date       :
+* Description:
+*-----------------------------------------------------------
+       ORG $1000
+EPROG: DC.W $083E, $0BCE, $0E0D, $0F0E, $08AF, $050A, $0832, $0A12
+EPRG1: DC.W $050A, $0406, $099F, $0D0F, $0000, $0005, $0007, $0000
+EIR:   DC.W 0 ;eregistre d'instruccio
+EPC:   DC.W 0 ;ecomptador de programa
+ET0:   DC.W 0 ;eregistre T0
+ET1:   DC.W 0 ;eregistre T1
+EX2:   DC.W 0 ;eregistre X2
+EX3:   DC.W 0 ;eregistre X3
+EX4:   DC.W 0 ;eregistre X4
+EX5:   DC.W 0 ;eregistre X5
+EX6:   DC.W 0 ;eregistre X6
+EX7:   DC.W 0 ;eregistre X7
+ESR:   DC.W 0 ;eregistre d'estat (00000000 00000ZNC)
+START:                  ; first instruction of program
+    ;A0,A1,A2,D1,D5
+    LEA.L EPROG,A0
+    CLR.L D1
+    CLR.L D2
+    CLR.L D3
+    CLR.L D4
+    CLR.L D5
+    
+    ;fetch
+SEC:  
+        CLR.L   D0
+        MOVE.W  EPC,D0
+        MULU    #2,D0
+        ADD.L   D0,A0
+        MOVE.W  (A0),EIR
+        SUB.L   D0,A0
+        ADD.W   #1,EPC
+        SUBQ.W  #2,SP
+        MOVE.W  EIR,-(SP)
+        JSR     DESPEPAH
+        ADDQ.L  #2,SP
+        MOVE.W  (SP)+,D1
+        MULU    #6,D1
+        MOVEA.L D1,A1
+        JMP     JMPLIST(A1)
+JMPLIST:
+        JMP     EHLT
+        JMP     EJMI
+        JMP     EJMZ
+        JMP     EJMN
+        JMP     EJMC
+        JMP     ETST
+        JMP     ECMP
+        JMP     EADD
+        JMP     ESUB
+        JMP     ENEG
+        JMP     EAND
+        JMP     EOR
+        JMP     ENOT
+        JMP     ESET
+        JMP     ETRA
+        JMP     ESTO
+        JMP     ELOA
+EHLT:
+        MOVE.B  #9,D0
+        TRAP    #15
+    
+EJMI:   
+     
+EJMZ:
+
+    
+EJMN:
+EJMC:
+ETST:
+ECMP:
+EADD:
+ESUB:
+ENEG:
+EAND:
+EOR:
+ENOT:
+ESET:
+ETRA:
+ESTO:
+ELOA:
+        
+VOLVER: 
+    BRA   SEC        
+    
+DESPEPAH:
+    MOVE.W D0, -(A7)
+    MOVE.W 6(A7),D0
+    btst #11, D0
+    BEQ ONCEZERO
+    btst #10, D0
+    BEQ ALU
+    btst #9, D0
+    BEQ STO
+    MOVE.W #16, 8(A7) ;LOA
+    BRA final
+    
+STO:
+    MOVE.W #15, 8(A7) ;STO
+    BRA final
+    
+ALU:
+    btst #3, D0
+    BEQ TRESZERO
+    btst #0, D0
+    BEQ SET
+    MOVE.W #14, 8(A7) ;TRA
+    BRA final
+    
+SET:
+    MOVE.W #13, 8(A7) ;SET
+    BRA final
+    
+    
+TRESZERO:
+    btst #2, D0
+    BEQ DOSZERO
+    btst #1, D0
+    BEQ UNOZERO
+    btst #0, D0
+    BEQ OR
+    MOVE.W #12, 8(A7) ;NOT
+    BRA final
+    
+OR:
+    MOVE.W #11, 8(A7) ;OR
+    BRA final
+    
+UNOZERO:
+    btst #0, D0
+    BEQ NEG
+    MOVE.W #10, 8(A7) ; AND
+    BRA final
+    
+NEG:
+    MOVE.W #9, 8(A7) ;NEG
+    BRA final
+
+    
+DOSZERO:
+    btst #1, D0
+    BEQ UNOZERODOS
+    btst #0, D0
+    BEQ ADD
+    MOVE.W #8, 8(A7) ;SUB
+    BRA final
+    
+ADD:
+    MOVE.W #7, 8(A7) ;ADD
+    BRA final
+    
+UNOZERODOS:
+    btst #0, D0
+    BEQ TST
+    MOVE.W #6, 8(A7) ;CMP
+    BRA final
+    
+TST: 
+    MOVE.W #5, 8(A7) ;TST
+    BRA final
+    
+      
+ONCEZERO:
+    btst #10, D0
+    BEQ DIEZZERO
+    btst #9, D0
+    BEQ NUEVEZERO
+    btst #8, D0
+    BEQ OCHOZERODOS
+    MOVE.W #4, 8(A7) ;JMC
+    BRA final
+    
+OCHOZERODOS:
+    MOVE.W #3, 8(A7) ;JMN
+    BRA final
+    
+NUEVEZERO:
+    btst #8, D0
+    BEQ OCHOZERO
+    MOVE.W #2, 8(A7) ;JMZ
+    BRA final
+    
+OCHOZERO: 
+    MOVE.W #1, 8(A7) ;JMI
+    BRA final
+    
+DIEZZERO:
+    MOVE.W #0, 8(A7) ;HLT
+    BRA final
+    
+final:
+    MOVE.W (A7)+, D0
+    RTS
+
+* Put program code here
+
+    SIMHALT             ; halt simulator
+
+* Put variables and constants here
+
+    END    START        ; last line of source
+
+
+
+
+
